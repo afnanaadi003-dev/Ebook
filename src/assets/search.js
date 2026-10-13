@@ -5,11 +5,13 @@
   const results = document.getElementById('results');
   const browse = document.getElementById('browse');
   const isHome = !!(results && browse);
+  const BASE = document.documentElement.dataset.base || '';
+  const path = (p) => BASE + p;
 
   let idx = null, loading = null, q = '', shown = 0;
   const PAGE = 100;
 
-  const loadIndex = () => (loading ||= fetch('/data/index.json').then((r) => r.json()).then((d) => (idx = d)));
+  const loadIndex = () => (loading ||= fetch(path('/data/index.json')).then((r) => r.json()).then((d) => (idx = d)));
 
   const norm = (s) => (s || '').toLowerCase();
 
@@ -41,7 +43,7 @@
 
   function card(r) {
     const [id, title, authors, y] = r;
-    return `<a class="card" href="/book/${encodeURIComponent(id)}/">
+    return `<a class="card" href="${path('/book/' + encodeURIComponent(id) + '/')}">
       <div class="cover"><img src="https://archive.org/services/img/${encodeURIComponent(id)}" alt="Cover of ${esc(title)}" loading="lazy" width="200" height="300"></div>
       <h3>${esc(title)}</h3><p>${esc(authors.split(',')[0] || 'Unknown')} · ${y || 'n.d.'}</p></a>`;
   }
@@ -81,7 +83,7 @@
       q ? u.searchParams.set('q', q) : u.searchParams.delete('q');
       history.replaceState(null, '', u);
     } else if (submit && q) {
-      location = '/?q=' + encodeURIComponent(q);
+      location = path('/?q=') + encodeURIComponent(q);
     }
   }
 
@@ -115,6 +117,6 @@
     const target = home || hdr;
     target.value = init;
     if (isHome) loadIndex().then(() => { q = init.trim(); render(true); });
-    else location = '/?q=' + encodeURIComponent(init);
+    else location = path('/?q=') + encodeURIComponent(init);
   }
 })();
