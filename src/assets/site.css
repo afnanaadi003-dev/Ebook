@@ -123,6 +123,16 @@ h2 { font-size: 22px; margin: 34px 0 14px; }
 .res-count { color: var(--fg2); font-size: 14.5px; margin: 22px 0 -4px; }
 .more { text-align: center; margin: 26px 0; }
 
+/* reader (kept on our domain, IA viewer embedded) */
+.main-min { padding-bottom: 0; }
+.reader { display: flex; flex-direction: column; height: calc(100vh - 58px); padding-bottom: 12px; }
+.reader-bar { display: flex; gap: 10px; align-items: center; padding: 12px 0 8px; flex-wrap: wrap; }
+.reader-bar strong { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw; }
+.reader-bar .spacer { flex: 1; }
+.reader-note { color: var(--fg2); font-size: 13px; margin: 0 0 8px; }
+.reader iframe { flex: 1; width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #fff; min-height: 0; }
+.btn.busy { opacity: .6; pointer-events: none; }
+
 /* footer */
 .foot { border-top: 1px solid var(--line); margin-top: 40px; padding: 22px 0 34px; color: var(--fg2); font-size: 14px; }
 .foot p { margin: 6px 0; }

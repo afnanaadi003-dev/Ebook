@@ -52,7 +52,7 @@ function card(r) {
   </a>`;
 }
 
-function layout({ title, desc, body, canonical = homeUrl, jsonld = '', bookJs = false }) {
+function layout({ title, desc, body, canonical = homeUrl, jsonld = '', bookJs = false, readJs = false, minimal = false, noindex = false }) {
   return `<!doctype html>
 <html lang="en" data-base="${BASE}">
 <head>
@@ -60,7 +60,8 @@ function layout({ title, desc, body, canonical = homeUrl, jsonld = '', bookJs = 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
-${ORIGIN ? `<link rel="canonical" href="${ORIGIN}${canonical}">` : ''}
+${noindex ? '<meta name="robots" content="noindex">' : ''}
+${ORIGIN && !noindex ? `<link rel="canonical" href="${ORIGIN}${canonical}">` : ''}
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:type" content="website">
@@ -76,15 +77,16 @@ ${jsonld ? `<script type="application/ld+json">${jsonld}</script>` : ''}
     <input id="q" type="search" placeholder="Search 5,000+ free books… (press /)" autocomplete="off" aria-label="Search books">
   </div>
 </header>
-<main class="wrap">
+<main class="wrap${minimal ? ' main-min' : ''}">
 ${body}
 </main>
-<footer class="foot"><div class="wrap">
+${minimal ? '' : `<footer class="foot"><div class="wrap">
   <p><strong>${SITE.name}</strong> — free public-domain books. Metadata &amp; files provided by the <a href="https://archive.org" rel="noopener">Internet Archive</a> and <a href="https://openlibrary.org" rel="noopener">Open Library</a>. Only items verified as public domain are listed.</p>
   <p class="muted">${new Date().toISOString().slice(0, 10)} · <a href="${BASE}/sitemap.xml">Sitemap</a></p>
-</div></footer>
+</div></footer>`}
 <script src="${assetUrl('search.js')}" defer></script>
 ${bookJs ? `<script src="${assetUrl('book.js')}" defer></script>` : ''}
+${readJs ? `<script src="${assetUrl('read.js')}" defer></script>` : ''}
 </body>
 </html>`;
 }
@@ -182,7 +184,10 @@ ${pager(p, pages, `${BASE}/page/`)}`;
     <p class="by">${(r.a || []).map((a) => `<a href="${searchUrl(a)}">${esc(a)}</a>`).join(' · ')}</p>
     <div class="dl-card">
       <h2>Download</h2>
-      <div id="dl" class="dl-buttons"><a class="btn primary" href="https://archive.org/details/${enc(r.id)}" rel="noopener">View &amp; download at Archive.org →</a></div>
+      <div id="dl" class="dl-buttons">
+        <a class="btn primary" href="${BASE}/read/?ia=${enc(r.id)}&amp;t=${enc(r.t)}">Read online</a>
+        <a class="btn" href="https://archive.org/details/${enc(r.id)}" target="_blank" rel="noopener">Archive.org ↗</a>
+      </div>
       <p class="muted" id="dl-note">Public-domain file · hosted by Internet Archive</p>
     </div>
     <table class="meta">
@@ -209,6 +214,26 @@ ${r.d ? `<section class="desc"><h2>About this book</h2><p>${esc(r.d)}</p></secti
   await writeFile(path.join(DIST, '404.html'), layout({
     title: 'Page not found | ' + SITE.name, desc: 'Page not found.',
     body: `<section class="hero"><h1>404</h1><p class="tag">Page not found.</p><p><a class="btn" href="${homeUrl}">← Back to all books</a></p></section>`,
+  }));
+
+  // ---- reader (stays on our domain; embeds Internet Archive viewer) ----
+  const readBody = `
+<div class="reader">
+  <div class="reader-bar">
+    <a class="btn" id="rback" href="${homeUrl}">← Back</a>
+    <strong id="rtitle">Reader</strong>
+    <span class="spacer"></span>
+    <a class="btn primary" id="rdl" href="https://archive.org" target="_blank" rel="noopener">Download</a>
+    <a class="btn" id="ria" href="https://archive.org" target="_blank" rel="noopener">Archive.org ↗</a>
+  </div>
+  <p class="reader-note" id="rnote">Loading reader…</p>
+  <iframe id="rf" title="Book reader"></iframe>
+</div>`;
+  await mkdir(path.join(DIST, 'read'), { recursive: true });
+  await writeFile(path.join(DIST, 'read', 'index.html'), layout({
+    title: 'Read online | ' + SITE.name,
+    desc: 'Read a public-domain book online.',
+    body: readBody, readJs: true, minimal: true, noindex: true,
   }));
 
   // ---- robots + sitemap ----
