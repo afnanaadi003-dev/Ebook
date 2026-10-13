@@ -1,0 +1,14 @@
+{
+  "name": "openbook",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Static catalog of 5000+ free public-domain books (no database)",
+  "scripts": {
+    "harvest": "node scripts/harvest.mjs --target 5000",
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "all": "node scripts/harvest.mjs --target 5000 && node scripts/build.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
