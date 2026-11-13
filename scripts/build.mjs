@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA = path.join(ROOT, 'data', 'books.jsonl');
+const COLLECTIONS_DATA = path.join(ROOT, 'data', 'collections.json');
 const SRC = path.join(ROOT, 'src');
 const DIST = path.join(ROOT, 'dist');
 const SITE = { name: 'OpenBook', perPage: 36 };
@@ -28,6 +29,10 @@ const pageUrl = (n) => (n === 1 ? homeUrl : `${BASE}/page/${n}/`);
 const bookUrl = (id) => `${BASE}/book/${enc(id)}/`;
 const assetUrl = (f) => `${BASE}/assets/${f}`;
 const searchUrl = (term) => `${BASE}/?q=${enc(term)}`;
+const collectionsUrl = `${BASE}/collections/`;
+const collectionUrl = (slug) => `${collectionsUrl}${enc(slug)}/`;
+const iaUrl = (id) => `https://archive.org/details/${enc(id)}`;
+let collections = [];
 const langName = { eng: 'English', fre: 'French', ger: 'German', spa: 'Spanish', ita: 'Italian', rus: 'Russian', lat: 'Latin', gre: 'Greek', dut: 'Dutch', por: 'Portuguese', ara: 'Arabic', hin: 'Hindi', chi: 'Chinese', jpn: 'Japanese', swe: 'Swedish', dan: 'Danish', nor: 'Norwegian', pol: 'Polish', cze: 'Czech', hun: 'Hungarian', fin: 'Finnish', tur: 'Turkish', heb: 'Hebrew', grc: 'Ancient Greek', san: 'Sanskrit' };
 const langs = (r) => (r.l || []).map((l) => langName[String(l).toLowerCase()] || l).join(', ');
 
@@ -49,6 +54,14 @@ function card(r) {
     <div class="cover"><img src="${coverUrl(r.id)}" alt="Cover of ${esc(r.t)}" loading="lazy" width="200" height="300"></div>
     <h3>${esc(r.t)}</h3>
     <p>${esc(r.a?.[0] || 'Unknown')} · ${year(r)}</p>
+  </a>`;
+}
+
+function iaCard(b, author) {
+  return `<a class="card" href="${iaUrl(b.id)}" target="_blank" rel="noopener">
+    <div class="cover"><img src="${coverUrl(b.id)}" alt="Cover of ${esc(b.t)}" loading="lazy" width="200" height="300"></div>
+    <h3>${esc(b.t)}</h3>
+    <p>${esc(author)} · ${b.y || 'n.d.'} · Internet Archive ↗</p>
   </a>`;
 }
 
@@ -74,6 +87,7 @@ ${jsonld ? `<script type="application/ld+json">${jsonld}</script>` : ''}
 <header class="top">
   <div class="wrap">
     <a class="logo" href="${homeUrl}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>${SITE.name}</a>
+    ${collections.length ? `<a class="chip nav-collections" href="${collectionsUrl}">Collections</a>` : ''}
     <input id="q" type="search" placeholder="Search 5,000+ free books… (press /)" autocomplete="off" aria-label="Search books">
   </div>
 </header>
@@ -95,6 +109,7 @@ async function main() {
   if (!existsSync(DATA)) { console.error('data/books.jsonl not found — run harvest first'); process.exit(1); }
   const raw = await readFile(DATA, 'utf8');
   const books = raw.split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  collections = existsSync(COLLECTIONS_DATA) ? JSON.parse(await readFile(COLLECTIONS_DATA, 'utf8')) : [];
   books.sort((a, b) => (b.dl || 0) - (a.dl || 0) || a.t.localeCompare(b.t));
   console.log(`Loaded ${books.length} books`);
 
@@ -134,6 +149,10 @@ async function main() {
   <div class="chips">${subjects.map(([s, n]) => `<a class="chip" href="${searchUrl(s)}">${esc(s)} <span>${n}</span></a>`).join('')}</div>
 </section>
 <section id="results" hidden aria-live="polite"></section>
+${collections.length ? `<section id="collections">
+  <h2>Curated collections</h2>
+  <div class="chips collection-chips">${collections.map((c) => `<a class="chip" href="${collectionUrl(c.slug)}">${esc(c.name)} <span>${(c.people || []).reduce((n, p) => n + (p.books || []).length, 0)}</span></a>`).join('')}</div>
+</section>` : ''}
 <section id="browse">
   <h2>Most downloaded</h2>
   <div class="grid">${books.slice(0, SITE.perPage * 2).map(card).join('')}</div>
@@ -145,6 +164,54 @@ async function main() {
     desc: `Download over ${books.length} free public-domain books as EPUB, PDF or TXT. Search by title, author or subject. Files hosted by the Internet Archive.`,
     body: homeBody, canonical: homeUrl,
   }));
+
+  // ---- curated collections (category pages) ----
+  if (collections.length) {
+    const indexBody = `
+<nav class="crumbs"><a href="${homeUrl}">Home</a> › <span>Collections</span></nav>
+<section class="hero">
+  <h1>Collections</h1>
+  <p class="tag">Curated categories of books, gathered by subject and author.</p>
+</section>
+<section class="grid collection-grid">${collections.map((c) => {
+      const n = (c.people || []).reduce((sum, p) => sum + (p.books || []).length, 0);
+      return `<a class="collection-tile" href="${collectionUrl(c.slug)}">
+    <h2>${esc(c.name)}</h2>
+    <p class="muted">${n} ${n === 1 ? 'book' : 'books'} · ${(c.people || []).map((p) => esc(p.name)).join(', ')}</p>
+  </a>`;
+    }).join('')}</section>`;
+    await mkdir(path.join(DIST, 'collections'), { recursive: true });
+    await writeFile(path.join(DIST, 'collections', 'index.html'), layout({
+      title: `Collections | ${SITE.name}`,
+      desc: 'Curated book collections — presidents, authors and subjects, linked to the Internet Archive.',
+      body: indexBody, canonical: collectionsUrl,
+    }));
+
+    for (const col of collections) {
+      const dir = path.join(DIST, 'collections', enc(col.slug));
+      await mkdir(dir, { recursive: true });
+      const people = (col.people || []).map((p) => `
+<section class="person">
+  <h2>${esc(p.name)}</h2>
+  <p class="muted person-role">${esc(p.role || '')}</p>
+  <div class="grid">${(p.books || []).map((b) => iaCard(b, p.name)).join('')}</div>
+  ${p.note ? `<p class="muted person-note">${esc(p.note)}</p>` : ''}
+</section>`).join('');
+      const body = `
+<nav class="crumbs"><a href="${homeUrl}">Home</a> › <a href="${collectionsUrl}">Collections</a> › <span>${esc(col.name)}</span></nav>
+<section class="hero">
+  <h1>${esc(col.name)}</h1>
+  <p class="tag">${esc(col.blurb || '')}</p>
+</section>
+${people}`;
+      await writeFile(path.join(dir, 'index.html'), layout({
+        title: `${col.name} — Books | ${SITE.name}`,
+        desc: `${col.name}: ${(col.people || []).map((p) => p.name).join(', ')}. Every title links to the Internet Archive.`,
+        body, canonical: collectionUrl(col.slug),
+      }));
+    }
+    console.log(`collections: ${collections.length} pages`);
+  }
 
   // ---- list pages ----
   for (let p = 2; p <= pages; p++) {
@@ -238,7 +305,8 @@ ${r.d ? `<section class="desc"><h2>About this book</h2><p>${esc(r.d)}</p></secti
 
   // ---- robots + sitemap ----
   await writeFile(path.join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\n${ORIGIN ? `Sitemap: ${ORIGIN}${BASE}/sitemap.xml\n` : ''}`);
-  const urls = [homeUrl, ...Array.from({ length: pages - 1 }, (_, i) => pageUrl(i + 2)),
+  const urls = [homeUrl, ...(collections.length ? [collectionsUrl, ...collections.map((c) => collectionUrl(c.slug))] : []),
+    ...Array.from({ length: pages - 1 }, (_, i) => pageUrl(i + 2)),
     ...books.map((r) => bookUrl(r.id))];
   const sm = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls.map((u) => `<url><loc>${ORIGIN}${u}</loc></url>`).join('\n') + `\n</urlset>\n`;

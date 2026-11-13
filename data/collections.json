@@ -1,0 +1,29 @@
+[
+  {
+    "slug": "president-of-united-states",
+    "name": "President of the United States",
+    "blurb": "Books written by the people who have held America's highest office — starting with Barack Obama, the 44th President. Every title links to its record on the Internet Archive, where it can be borrowed and read online.",
+    "people": [
+      {
+        "name": "Barack Obama",
+        "role": "44th President of the United States · 2009–2017",
+        "books": [
+          { "id": "dreamsfrommyfath0000obam", "t": "Dreams from My Father: A Story of Race and Inheritance", "y": 1995 },
+          { "id": "audacityofhopeth2006obam", "t": "The Audacity of Hope: Thoughts on Reclaiming the American Dream", "y": 2006 },
+          { "id": "changewecanbelie0000obam", "t": "Change We Can Believe In: Barack Obama's Plan to Renew America's Promise", "y": 2008 },
+          { "id": "planbarackobamas0000obam", "t": "The Plan: Barack Obama's Promise to America", "y": 2008 },
+          { "id": "inauguraladdress00obam", "t": "The Inaugural Address, 2009", "y": 2009 },
+          { "id": "ourenduringspiri0000obam", "t": "Our Enduring Spirit: President Barack Obama's First Words to America", "y": 2009 },
+          { "id": "barackobamainhis0000obam", "t": "Barack Obama in His Own Words", "y": 2009 },
+          { "id": "greatspeechesofb0000obam", "t": "The Great Speeches of Barack Obama", "y": 2009 },
+          { "id": "politicsofhopewo0000obam", "t": "The Politics of Hope: The Words of Barack Obama", "y": 2009 },
+          { "id": "giftofhopewordso0000obam", "t": "The Gift of Hope: The Words of Barack Obama", "y": 2009 },
+          { "id": "oftheeisinglette00obam", "t": "Of Thee I Sing: A Letter to My Daughters", "y": 2010 },
+          { "id": "obamatalksbackgl0000obam", "t": "Obama Talks Back: Global Lessons — A Dialogue with America's Young Leaders", "y": 2012 },
+          { "id": "wearechangewesee0000obam", "t": "We Are the Change We Seek: The Speeches of Barack Obama", "y": 2017 }
+        ],
+        "note": "A Promised Land (2020) is not yet available on the Internet Archive."
+      }
+    ]
+  }
+]
